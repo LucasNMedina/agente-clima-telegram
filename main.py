@@ -1,5 +1,9 @@
 import os
 import requests
+from dotenv import load_dotenv
+
+# Cargar las variables del archivo .env al entorno
+load_dotenv()
 
 # Cargar credenciales desde variables de entorno
 API_KEY_WEATHER = os.getenv("OPENWEATHER_API_KEY")
