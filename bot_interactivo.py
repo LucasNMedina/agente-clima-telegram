@@ -62,7 +62,18 @@ def obtener_pronostico(ciudad : str, api_key : str):
             return None
             
         datos = respuesta.json()
-        return datos
+        lista_pronosticos = []
+        for item in datos["list"][:4]:
+            hora = item["dt_txt"].split(" ")[1][:5]  # Extrae solo 'HH:MM'
+            temp = item["main"]["temp"]
+            desc = item["weather"][0]["description"]
+    
+            lista_pronosticos.append({
+                "hora": hora,
+                "temperatura": temp,
+                "descripcion": desc
+            })
+        return lista_pronosticos
     except requests.RequestException as e:
         print(f"Error de conexión a la API: {e}")
         return None
@@ -98,6 +109,26 @@ def responder_clima(mensaje):
         bot.reply_to(mensaje, texto, parse_mode="Markdown")
     else:
         bot.reply_to(mensaje, f"❌ No pude encontrar información sobre el clima de '{ciudad}'. Revisa el nombre.")
+
+@bot.message_handler(commands=['pronostico'])
+def responder_pronostico(mensaje):
+    partes = mensaje.text.split(maxsplit=1)
+    if len(partes) == 1:
+        ciudad = "quilmes"
+    else:
+        ciudad = partes[1]
+
+    pronosticos = obtener_pronostico(ciudad, API_KEY_WEATHER)
+    
+    if pronosticos:
+        texto = f"📅 *Pronóstico para las próximas horas en {ciudad.capitalize()}*\n\n"
+        # Iteramos sobre los 4 reportes de la lista
+        for p in pronosticos:
+            texto += f"⏰ *{p['hora']} hs* ➔ {p['temperatura']}°C, {p['descripcion'].capitalize()}\n"
+        
+        bot.reply_to(mensaje, texto, parse_mode="Markdown")
+    else:
+        bot.reply_to(mensaje, f"❌ No pude encontrar el pronóstico para '{ciudad}'. Revisá el nombre.")
 
 print("Bot escuchando mensajes...")
 bot.infinity_polling()
